@@ -162,6 +162,20 @@
     }
     .required-warn{display:none;color:#b35d4f;font-size:14px;margin-top:10px}
     .footer-note{text-align:center;color:var(--muted);font-size:13px;line-height:1.8;margin:18px auto 0;max-width:760px}
+    .result-actions{
+      display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;
+    }
+    .tiny-btn{
+      border:none;border-radius:999px;padding:10px 14px;font-size:14px;cursor:pointer;
+      font-weight:700;letter-spacing:.03em;background:#f0e8dc;color:#54483b;
+    }
+    .tiny-btn.dark{background:#2f3b62;color:#fff}
+    .percent-row{
+      display:grid;grid-template-columns:92px 1fr 42px;gap:8px;align-items:center;
+      font-size:14px;margin:9px 0;
+    }
+    .percent-name{white-space:nowrap}
+    .percent-num{text-align:right;color:var(--muted)}
     .print-hide{}
     @media print{
       body{background:#fff}.print-hide,.card{display:none!important}.result{display:block!important;box-shadow:none}.wrap{padding:0}.hero{display:none}
@@ -208,6 +222,10 @@
           <div class="notice">
             本结果用于健康教育与自我觉察，不等同于医学诊断。若长期严重失眠、焦虑或白天功能明显受损，建议寻求校医院、心理咨询中心或专业医生帮助。
           </div>
+          <div class="result-actions">
+            <button type="button" class="tiny-btn dark" id="downloadCardBtn">保存我的人格卡片</button>
+            <button type="button" class="tiny-btn" id="copyResultBtn">复制结果文字</button>
+          </div>
         </div>
         <div class="mini">
           <h3>核心建议</h3>
@@ -218,7 +236,8 @@
           <div class="tags" id="keywords"></div>
         </div>
         <div class="mini">
-          <h3>各类型倾向得分</h3>
+          <h3>人格倾向比例</h3>
+          <div id="percentChart"></div>
           <table class="score-table" id="scoreTable"></table>
         </div>
       </div>
@@ -230,6 +249,11 @@
   </div>
 
 <script>
+// 后台收集接口：
+// 1. 现在留空，网页只在本地计算结果，不上传数据。
+// 2. 如果之后用 Google Apps Script / Supabase 等做收集，把接口地址粘到这里。
+const DATA_ENDPOINT = "";
+
 const questions = [
   {id:"q1", title:"1. 你的性别是？", type:"radio", req:false, opts:["男","女","不愿透露"]},
   {id:"q2", title:"2. 你的年级是？", type:"radio", req:false, opts:["本科生","硕士生","博士生及以上"]},
@@ -439,8 +463,54 @@ function decide(s){
   return s.lion >= s.bear ? "lion" : "bear";
 }
 
+function getAnswersPayload(type, s){
+  const answerObj = {};
+  questions.forEach(q=>{
+    if(q.type === "radio"){
+      const idx = val(q.id);
+      answerObj[q.id] = idx === null ? "" : q.opts[idx];
+    }
+    if(q.type === "checkbox"){
+      answerObj[q.id] = checks(q.id).map(i=>q.opts[i]).join("；");
+    }
+    if(q.type === "matrix"){
+      q.rows.forEach(row=>{
+        const idx = val(row.id);
+        answerObj[row.id] = idx === null ? "" : q.opts[idx];
+      });
+    }
+    if(q.type === "radioText"){
+      const idx = val(q.id);
+      answerObj[q.id] = idx === null ? "" : q.opts[idx];
+      answerObj.contact = document.querySelector('input[name="contact"]')?.value || "";
+    }
+  });
+  return {
+    time: new Date().toISOString(),
+    result_type: typeInfo[type].name,
+    result_subtype: typeInfo[type].sub,
+    scores: s,
+    answers: answerObj
+  };
+}
+
+function trySubmitData(payload){
+  if(!DATA_ENDPOINT) return;
+  try{
+    fetch(DATA_ENDPOINT, {
+      method: "POST",
+      mode: "no-cors",
+      headers: {"Content-Type":"text/plain;charset=utf-8"},
+      body: JSON.stringify(payload)
+    });
+  }catch(e){
+    console.warn("数据提交失败，但不影响本地结果显示：", e);
+  }
+}
+
 function showResult(type, s){
   const info = typeInfo[type];
+  window.__lastResult = {type, scores:s};
   const head = document.getElementById("resultHead");
   head.style.background = `linear-gradient(135deg, ${info.color[0]}, ${info.color[1]})`;
   document.getElementById("typeName").textContent = info.name;
@@ -452,14 +522,157 @@ function showResult(type, s){
 
   const names = {anxiety:"焦虑兔", owl:"夜游猫头鹰", panda:"敏感小熊猫", bat:"时差蝙蝠", squirrel:"硬撑松鼠", lion:"狮子型", bear:"熊型"};
   const max = Math.max(...Object.values(s),1);
+  const total = Object.values(s).reduce((a,b)=>a+b,0) || 1;
+  const rows = Object.entries(s).sort((a,b)=>b[1]-a[1]);
+  document.getElementById("percentChart").innerHTML = rows.map(([k,v])=>{
+    const pct = Math.round(v / total * 100);
+    return `<div class="percent-row">
+      <div class="percent-name">${names[k]}</div>
+      <div class="bar"><span style="width:${pct}%"></span></div>
+      <div class="percent-num">${pct}%</div>
+    </div>`;
+  }).join("");
   document.getElementById("scoreTable").innerHTML =
-    `<tr><th>类型</th><th>得分</th><th>倾向</th></tr>` +
-    Object.entries(s).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`
+    `<tr><th>类型</th><th>得分</th><th>相对强度</th></tr>` +
+    rows.map(([k,v])=>`
       <tr><td>${names[k]}</td><td>${v}</td><td><div class="bar"><span style="width:${Math.round(v/max*100)}%"></span></div></td></tr>
     `).join("");
 
+  const payload = getAnswersPayload(type, s);
+  trySubmitData(payload);
+
   document.getElementById("result").style.display = "block";
   document.getElementById("result").scrollIntoView({behavior:"smooth", block:"start"});
+}
+
+function downloadResultCard(){
+  if(!window.__lastResult){
+    alert("请先完成问卷生成结果。");
+    return;
+  }
+  const {type, scores} = window.__lastResult;
+  const info = typeInfo[type];
+  const names = {anxiety:"焦虑兔", owl:"夜游猫头鹰", panda:"敏感小熊猫", bat:"时差蝙蝠", squirrel:"硬撑松鼠", lion:"狮子型", bear:"熊型"};
+  const total = Object.values(scores).reduce((a,b)=>a+b,0) || 1;
+  const rows = Object.entries(scores).sort((a,b)=>b[1]-a[1]).slice(0,5);
+
+  const canvas = document.createElement("canvas");
+  canvas.width = 1080;
+  canvas.height = 1500;
+  const ctx = canvas.getContext("2d");
+
+  function roundRect(x,y,w,h,r){
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);
+    ctx.arcTo(x,y,x+w,y,r);
+    ctx.closePath();
+  }
+  function wrapText(text,x,y,maxWidth,lineHeight,font){
+    ctx.font = font;
+    const chars = text.split("");
+    let line = "";
+    const lines = [];
+    chars.forEach(ch=>{
+      const test = line + ch;
+      if(ctx.measureText(test).width > maxWidth && line){
+        lines.push(line); line = ch;
+      }else line = test;
+    });
+    if(line) lines.push(line);
+    lines.forEach((l,i)=>ctx.fillText(l,x,y+i*lineHeight));
+    return y + lines.length*lineHeight;
+  }
+
+  ctx.fillStyle = "#f7f3ec";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  roundRect(70,70,940,1360,42);
+  ctx.fillStyle = "#fffdf8";
+  ctx.fill();
+  ctx.strokeStyle = "#e8dfd1";
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  const grad = ctx.createLinearGradient(90,90,990,360);
+  grad.addColorStop(0, info.color[0]);
+  grad.addColorStop(1, info.color[1]);
+  roundRect(100,100,880,330,34);
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  ctx.fillStyle = "rgba(255,255,255,.86)";
+  ctx.font = "bold 34px serif";
+  ctx.textAlign = "center";
+  ctx.fillText("SLEEP PERSONA CARD", 540, 160);
+
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "bold 92px serif";
+  ctx.fillText(info.name, 540, 265);
+  ctx.font = "38px serif";
+  ctx.fillText(info.sub, 540, 325);
+  ctx.font = "90px serif";
+  ctx.fillText(info.emoji, 540, 410);
+
+  ctx.textAlign = "left";
+  ctx.fillStyle = "#2f3343";
+  ctx.font = "bold 38px serif";
+  ctx.fillText("结果解读", 130, 520);
+  ctx.fillStyle = "#555b68";
+  wrapText(info.text,130,575,820,48,"32px serif");
+
+  ctx.fillStyle = "#2f3343";
+  ctx.font = "bold 38px serif";
+  ctx.fillText("核心建议", 130, 770);
+  ctx.fillStyle = "#555b68";
+  ctx.font = "32px serif";
+  info.tips.forEach((t,i)=>{
+    ctx.fillText("• " + t, 150, 830+i*52);
+  });
+
+  ctx.fillStyle = "#2f3343";
+  ctx.font = "bold 38px serif";
+  ctx.fillText("人格倾向比例", 130, 1040);
+
+  rows.forEach(([k,v],i)=>{
+    const y = 1100 + i*58;
+    const pct = Math.round(v/total*100);
+    ctx.fillStyle = "#555b68";
+    ctx.font = "28px serif";
+    ctx.fillText(names[k], 150, y);
+    ctx.fillStyle = "#eee4d7";
+    roundRect(330, y-24, 420, 22, 11);
+    ctx.fill();
+    ctx.fillStyle = info.color[1];
+    roundRect(330, y-24, Math.max(4,420*pct/100), 22, 11);
+    ctx.fill();
+    ctx.fillStyle = "#747887";
+    ctx.fillText(pct+"%", 785, y);
+  });
+
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#8b8175";
+  ctx.font = "28px serif";
+  ctx.fillText("大学生睡眠健康促进项目", 540, 1365);
+  ctx.font = "22px serif";
+  ctx.fillText("本结果用于健康教育与自我觉察，不等同于医学诊断", 540, 1405);
+
+  const a = document.createElement("a");
+  a.download = `睡眠动物人格卡片_${info.name}.png`;
+  a.href = canvas.toDataURL("image/png");
+  a.click();
+}
+
+function copyResultText(){
+  if(!window.__lastResult){
+    alert("请先完成问卷生成结果。");
+    return;
+  }
+  const {type, scores} = window.__lastResult;
+  const info = typeInfo[type];
+  const text = `我的睡眠动物人格：${info.name}｜${info.sub}\n${info.text}\n关键词：${info.keys.join("、")}\n建议：${info.tips.join("；")}`;
+  navigator.clipboard?.writeText(text).then(()=>alert("结果文字已复制。")).catch(()=>alert(text));
 }
 
 document.getElementById("quiz").addEventListener("submit", e=>{
@@ -480,6 +693,11 @@ document.getElementById("resetBtn").addEventListener("click", ()=>{
   document.getElementById("result").style.display = "none";
   document.getElementById("warn").style.display = "none";
   window.scrollTo({top:0, behavior:"smooth"});
+});
+
+document.addEventListener("click", (e)=>{
+  if(e.target && e.target.id === "downloadCardBtn") downloadResultCard();
+  if(e.target && e.target.id === "copyResultBtn") copyResultText();
 });
 
 renderQuestions();
