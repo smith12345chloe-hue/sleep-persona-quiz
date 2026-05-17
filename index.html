@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>睡眠动物人格评估</title>
+  <style>
+    :root{
+      --bg:#f7f3ec;
+      --card:#fffdf8;
+      --ink:#2f3343;
+      --muted:#747887;
+      --line:#e8dfd1;
+      --blue:#6d7fa8;
+      --purple:#8b83b3;
+      --green:#7d9a7d;
+      --gold:#c69046;
+      --coral:#c97868;
+      --brown:#8b684f;
+      --shadow:0 18px 60px rgba(58,48,36,.12);
+      --radius:26px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: "Noto Serif SC","Songti SC","Microsoft YaHei",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      background:
+        radial-gradient(circle at 10% 10%, rgba(141,131,179,.18), transparent 28%),
+        radial-gradient(circle at 92% 8%, rgba(198,144,70,.16), transparent 28%),
+        radial-gradient(circle at 50% 100%, rgba(125,154,125,.15), transparent 30%),
+        var(--bg);
+      color:var(--ink);
+      min-height:100vh;
+    }
+    .wrap{max-width:980px;margin:0 auto;padding:34px 18px 70px}
+    .hero{
+      background:rgba(255,253,248,.85);
+      border:1px solid rgba(232,223,209,.9);
+      box-shadow:var(--shadow);
+      border-radius:34px;
+      padding:36px 34px;
+      position:relative;
+      overflow:hidden;
+    }
+    .hero:after{
+      content:"";
+      position:absolute;right:-60px;top:-70px;width:260px;height:260px;
+      border-radius:50%;background:rgba(109,127,168,.12);
+    }
+    .eyebrow{
+      letter-spacing:.24em;
+      color:var(--muted);
+      font-size:13px;
+      text-align:center;
+      margin-bottom:22px;
+    }
+    h1{
+      margin:0;
+      font-size:clamp(36px,6vw,68px);
+      line-height:1.08;
+      color:#29324f;
+      letter-spacing:.04em;
+      font-weight:800;
+    }
+    .subtitle{margin-top:14px;font-size:18px;color:var(--muted);line-height:1.8;max-width:760px}
+    .pillbar{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+    .pill{
+      border:1px solid var(--line);
+      background:#fffaf0;
+      padding:8px 13px;
+      border-radius:999px;
+      color:#6c604f;
+      font-size:14px;
+    }
+    .card{
+      margin-top:22px;
+      background:rgba(255,253,248,.92);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:0 12px 38px rgba(58,48,36,.08);
+      padding:26px;
+    }
+    .section-title{
+      display:flex;align-items:center;gap:12px;
+      font-size:24px;font-weight:800;margin:2px 0 18px;
+      color:#38415f;
+    }
+    .section-title .dot{width:14px;height:14px;border-radius:50%;background:var(--purple);box-shadow:0 0 0 7px rgba(139,131,179,.12)}
+    .q{
+      border-top:1px dashed #e4d9c8;
+      padding:22px 0;
+    }
+    .q:first-of-type{border-top:none}
+    .q-title{font-weight:700;font-size:17px;line-height:1.65;margin-bottom:12px}
+    .hint{font-size:13px;color:var(--muted);margin-top:-4px;margin-bottom:12px}
+    .options{display:grid;gap:10px}
+    label.option{
+      display:flex;align-items:flex-start;gap:10px;
+      padding:12px 14px;
+      border:1px solid #e9dfcf;
+      border-radius:16px;
+      background:#fffbf5;
+      cursor:pointer;
+      transition:.15s ease;
+      line-height:1.5;
+    }
+    label.option:hover{transform:translateY(-1px);border-color:#cfc0aa;background:#fff7eb}
+    input[type="radio"],input[type="checkbox"]{margin-top:4px;accent-color:#6d7fa8}
+    input[type="text"]{
+      width:100%;border:1px solid #e4d9c8;border-radius:14px;
+      background:#fffaf2;padding:12px 14px;font-size:15px;color:var(--ink);
+    }
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media(max-width:720px){.grid2{grid-template-columns:1fr}.hero{padding:28px 22px}.card{padding:20px}h1{font-size:42px}}
+    .matrix{
+      display:grid;gap:12px;
+    }
+    .matrix-row{
+      border:1px solid #e9dfcf;border-radius:18px;background:#fffbf5;padding:14px;
+    }
+    .matrix-row strong{display:block;margin-bottom:10px}
+    .matrix-options{display:flex;flex-wrap:wrap;gap:8px}
+    .matrix-options label{
+      border:1px solid #e9dfcf;border-radius:999px;background:#fffaf2;padding:8px 11px;font-size:14px;cursor:pointer;
+    }
+    .actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:20px}
+    button{
+      border:none;border-radius:999px;padding:13px 22px;font-size:16px;cursor:pointer;
+      font-weight:700;letter-spacing:.04em;
+    }
+    .primary{background:#2f3b62;color:#fff;box-shadow:0 10px 24px rgba(47,59,98,.22)}
+    .secondary{background:#f0e8dc;color:#54483b}
+    .result{
+      display:none;margin-top:24px;border-radius:30px;overflow:hidden;border:1px solid var(--line);
+      background:#fffdf8;box-shadow:var(--shadow);
+    }
+    .result-head{
+      padding:30px;
+      color:#fff;
+      background:linear-gradient(135deg,#2f3b62,#8b83b3);
+      position:relative;
+    }
+    .result-head .small{letter-spacing:.22em;font-size:12px;opacity:.86;margin-bottom:10px}
+    .result-head h2{font-size:48px;line-height:1.05;margin:0 0 8px}
+    .result-head p{font-size:18px;opacity:.96;margin:0;line-height:1.6}
+    .animal-emoji{position:absolute;right:28px;top:28px;font-size:78px;filter:drop-shadow(0 8px 16px rgba(0,0,0,.18))}
+    .result-body{padding:26px;display:grid;grid-template-columns:1.1fr .9fr;gap:18px}
+    @media(max-width:760px){.result-body{grid-template-columns:1fr}.animal-emoji{position:static;margin-top:18px;display:block}.result-head h2{font-size:40px}}
+    .mini{
+      border:1px solid #eee1d2;background:#fffaf3;border-radius:22px;padding:18px;
+    }
+    .mini h3{margin:0 0 12px;font-size:20px;color:#38415f}
+    .mini ul{margin:0;padding-left:20px;line-height:1.9}
+    .tags{display:flex;gap:8px;flex-wrap:wrap}
+    .tag{background:#f2e8d9;border:1px solid #eadbc7;border-radius:999px;padding:7px 11px;color:#685947;font-size:14px}
+    .score-table{width:100%;border-collapse:collapse;font-size:14px;margin-top:8px}
+    .score-table th,.score-table td{border-bottom:1px solid #eadfce;padding:9px;text-align:left}
+    .bar{height:8px;background:#eee4d7;border-radius:99px;overflow:hidden}
+    .bar span{display:block;height:100%;background:#6d7fa8;border-radius:99px}
+    .notice{
+      background:#f8efe3;border:1px solid #eadbc7;color:#665445;border-radius:18px;padding:14px 16px;line-height:1.7;font-size:14px;margin-top:14px;
+    }
+    .required-warn{display:none;color:#b35d4f;font-size:14px;margin-top:10px}
+    .footer-note{text-align:center;color:var(--muted);font-size:13px;line-height:1.8;margin:18px auto 0;max-width:760px}
+    .print-hide{}
+    @media print{
+      body{background:#fff}.print-hide,.card{display:none!important}.result{display:block!important;box-shadow:none}.wrap{padding:0}.hero{display:none}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero print-hide">
+      <div class="eyebrow">SLEEP PERSONA ASSESSMENT</div>
+      <h1>睡眠动物人格评估</h1>
+      <div class="subtitle">
+        这是一个面向大学生睡眠健康促进项目的趣味化自评问卷。填写后将根据你的睡眠行为、节律、压力状态和环境敏感性，生成一个“睡眠动物人格”结果。
+      </div>
+      <div class="pillbar">
+        <span class="pill">格林模式需求评估</span>
+        <span class="pill">PSQI 思路简化</span>
+        <span class="pill">动物分型反馈</span>
+        <span class="pill">非医学诊断</span>
+      </div>
+    </div>
+
+    <form id="quiz" class="card print-hide">
+      <div class="section-title"><span class="dot"></span>第一部分：基本信息</div>
+      <div id="questions"></div>
+      <div class="actions">
+        <button type="submit" class="primary">生成我的睡眠人格</button>
+        <button type="button" id="resetBtn" class="secondary">重新填写</button>
+      </div>
+      <div id="warn" class="required-warn">还有题目没有完成，请检查必答题后再生成结果。</div>
+    </form>
+
+    <div id="result" class="result">
+      <div class="result-head" id="resultHead">
+        <div class="small">YOUR SLEEP PERSONA CARD</div>
+        <h2 id="typeName">焦虑兔</h2>
+        <p id="typeSub">压力焦虑型</p>
+        <span class="animal-emoji" id="animalEmoji">🐰</span>
+      </div>
+      <div class="result-body">
+        <div class="mini">
+          <h3>结果解读</h3>
+          <p id="interpretation" style="line-height:1.9;margin:0"></p>
+          <div class="notice">
+            本结果用于健康教育与自我觉察，不等同于医学诊断。若长期严重失眠、焦虑或白天功能明显受损，建议寻求校医院、心理咨询中心或专业医生帮助。
+          </div>
+        </div>
+        <div class="mini">
+          <h3>核心建议</h3>
+          <ul id="suggestions"></ul>
+        </div>
+        <div class="mini">
+          <h3>关键词</h3>
+          <div class="tags" id="keywords"></div>
+        </div>
+        <div class="mini">
+          <h3>各类型倾向得分</h3>
+          <table class="score-table" id="scoreTable"></table>
+        </div>
+      </div>
+    </div>
+
+    <p class="footer-note print-hide">
+      分享方式：把这个 HTML 文件发给同学，对方用浏览器打开即可填写。若要线上收集大量结果，建议后续把同样题目迁移到问卷星/腾讯问卷，并按本页面的评分规则配置自动反馈。
+    </p>
+  </div>
+
+<script>
+const questions = [
+  {id:"q1", title:"1. 你的性别是？", type:"radio", req:false, opts:["男","女","不愿透露"]},
+  {id:"q2", title:"2. 你的年级是？", type:"radio", req:false, opts:["本科生","硕士生","博士生及以上"]},
+  {id:"q3", title:"3. 过去一个月，你平均每晚实际睡眠时长约为？", type:"radio", req:true, opts:["少于6小时","6-7小时","7-8小时","8小时以上"]},
+  {id:"q4", title:"4. 你如何评价自己过去一个月的整体睡眠质量？", type:"radio", req:true, opts:["很好","较好","一般","较差","很差"]},
+  {id:"q5", title:"5. 过去一个月，你白天感到精力不足、昏昏欲睡或打盹的频率是？", type:"radio", req:true, opts:["从未","少于1次/周","1-2次/周","≥3次/周"]},
+  {id:"q6", title:"6. 如果第二天完全自由，没有闹钟，你会几点自然醒？", type:"radio", req:true, opts:["早上6:00之前","早上6:00 - 7:30","早上7:30 - 9:00","早上9:00之后"]},
+  {id:"q7", title:"7. 在自由状态下，你感觉头脑最清醒、效率最高的时段是？", type:"radio", req:true, opts:["清晨（起床后-上午10点）","上午（10点-中午12点）","下午（12点-下午5点）","晚上（下午5点-深夜）"]},
+  {id:"q8", title:"8. 你完成一项需要复杂思考或创造性的任务的最佳时段是？", type:"radio", req:true, opts:["一大早","上午","下午","晚上或深夜"]},
+  {id:"q9", title:"9. 躺在床上准备入睡时，你的大脑状态最常接近于？", type:"radio", req:true, opts:["一片空白，很快就能睡着","会想些事情，但能慢慢平静","思绪纷乱，像跑马灯一样停不下来","身体很累，但大脑异常清醒"]},
+  {id:"q10", title:"10. 当你计划睡觉时，是否常出现“再刷5分钟手机/看一集剧”就睡，结果拖延很久的情况？", type:"radio", req:true, opts:["几乎总是","经常","有时","很少","从不"]},
+  {id:"q11", title:"11. 如果躺在床上20分钟仍睡不着，你通常会？", type:"radio", req:true, opts:["继续躺着，努力让自己睡着","起来看书或做点安静的事，有睡意再睡","索性起来玩手机/电脑","感到焦虑，反复看时间"]},
+  {id:"q12", title:"12. 你对光线、声音等睡眠环境的敏感度如何？", type:"radio", req:true, opts:["极度敏感，稍有干扰就难入睡或易醒","比较敏感，需要相对安静黑暗的环境","不太敏感，有点干扰也能睡着","不敏感，哪儿都能睡"]},
+  {id:"q13", title:"13. 从周五晚上到周日晚上，你的就寝时间通常会如何变化？", type:"radio", req:true, opts:["基本固定","逐渐推迟1-2小时","周五、周六晚显著推迟（2小时以上），周日再试图提前","毫无规律"]},
+  {id:"q14", title:"14. 你白天是否依赖咖啡、茶或功能饮料来提神？", type:"radio", req:true, opts:["每天都需要，且下午/晚上也会喝","每天1-2杯，通常在上午","偶尔需要","几乎不喝"]},
+  {id:"q15", title:"15. 你是否会因为白天“没干正事”或效率低，而在晚上熬夜“补偿性”工作/学习？", type:"radio", req:true, opts:["经常如此","有时如此","很少如此","从不"]},
+  {id:"q16", title:"16. 周末补觉后，你周一早晨的感觉通常是？", type:"radio", req:true, opts:["神清气爽，精力恢复","依旧疲惫，仿佛没睡够","头晕脑胀，需要更久“开机”","和平常没什么不同"]},
+  {id:"q17", title:"17. 你平均每天用于体育锻炼（不包括上下课走路）的时间大约是？", type:"radio", req:true, opts:["少于30分钟","30分钟-1小时","1小时-2小时","2小时以上"]},
+  {id:"q18", title:"18. 过去一个月，你感到紧张、焦虑或烦躁的频率是？", type:"radio", req:true, opts:["几乎每天","一半以上的日子","有几天","完全没有"]},
+  {id:"q19", title:"19. 朋友会如何描述你白天的常态？", type:"radio", req:true, opts:["精力充沛的“行动派”","稳重可靠的“合作者”","容易紧张/追求完美的“细节控”","随和但容易犯困的“温和派”"]},
+  {id:"q20", title:"20. 你如何看待“深夜独处的时间”？", type:"radio", req:true, opts:["是宝贵的“充电”或高效工作时间","是放松娱乐、享受自由的时间","是应该用来睡觉的时间，但有时控制不住","常常因为焦虑或失眠而变得难熬"]},
+  {id:"q21", title:"21. 即便睡够了8小时，你早晨醒来的第一感觉通常是？", type:"radio", req:true, opts:["神清气爽","还行，需要缓几分钟","依然困倦，想再躺会儿","头昏脑胀"]},
+  {id:"q22", title:"22. 请评估你对以下陈述的同意程度：", type:"matrix", req:true, rows:[
+    {id:"q22a", text:"a) 我常常担心自己会失眠。"},
+    {id:"q22b", text:"b) 我觉得只有深夜的时间才完全属于自己。"}
+  ], opts:["非常同意","同意","一般","不同意","非常不同意"]},
+  {id:"q23", title:"23. 过去一个月，你需要多久才能入睡？", type:"radio", req:true, opts:["15分钟内","16-30分钟","31-60分钟","60分钟以上"]},
+  {id:"q24", title:"24. 你认为影响你睡眠最主要的因素是？", hint:"最多选3项", type:"checkbox", req:true, max:3, opts:["学业压力","手机/网络依赖","作息不规律","焦虑/抑郁情绪","宿舍环境干扰","咖啡/茶依赖","缺乏运动","其他"]},
+  {id:"q25", title:"25. 如果有一个系统性的睡眠改善项目，你的参与意愿是？", type:"radio", req:false, opts:["非常愿意，迫切需要","有兴趣，想试试看","不确定，看具体情况","不太感兴趣"]},
+  {id:"q26", title:"26. 你对以下哪种改善睡眠的活动形式最感兴趣？", type:"checkbox", req:false, opts:["正念冥想/放松训练","瑜伽/八段锦等身心运动","睡眠知识科普与习惯打卡","针对睡眠拖延/焦虑的团体辅导","睡眠环境优化与助眠好物分享","一对一睡眠咨询","其他"]},
+  {id:"q27", title:"27. 你是否愿意留下联系方式，以便参与之后的睡眠促进活动？", type:"radioText", req:false, opts:["愿意","暂不需要，谢谢"]}
+];
+
+const typeInfo = {
+  anxiety:{
+    name:"焦虑兔", sub:"压力焦虑型", emoji:"🐰", color:["#2f3b62","#8b83b3"],
+    text:"你的睡眠困扰更像由压力、担心和睡前反复思考驱动。你可能不是不想睡，而是大脑在夜晚仍停留在复盘、预演和担心模式里。",
+    keys:["认知反刍","情绪过载","紧张","入睡困难"],
+    tips:["睡前安排5-10分钟呼吸或身体扫描","把担心写进“明日处理清单”，减少床上反刍","如果20分钟仍睡不着，先离床做安静活动，有睡意再回床"]
+  },
+  owl:{
+    name:"夜游猫头鹰", sub:"拖延娱乐型", emoji:"🦉", color:["#26324f","#6d7fa8"],
+    text:"你的睡眠问题更像来自主动选择型熬夜：深夜被当作自由、娱乐或补偿时间。真正需要调整的不是意志力本身，而是睡前环境和即时奖励机制。",
+    keys:["报复性熬夜","即时快感","拖延","睡前刷屏"],
+    tips:["设置睡前一小时离屏或手机远离床铺","建立固定睡前程序，例如洗漱、拉伸、关灯三步","和同伴组成打卡小组，用外部监督减少拖延"]
+  },
+  panda:{
+    name:"敏感小熊猫", sub:"环境干扰型", emoji:"🐾", color:["#b96255","#d79b85"],
+    text:"你的睡眠更容易被光线、声音、床品触感或室友作息打断。你的重点不是“硬睡”，而是降低环境刺激和身体高唤醒水平。",
+    keys:["光线敏感","噪声干扰","浅睡","易惊醒"],
+    tips:["优先优化眼罩、耳塞、遮光和白噪音","和室友约定基本熄灯与安静规则","睡前做渐进式肌肉放松，降低身体警觉状态"]
+  },
+  bat:{
+    name:"时差蝙蝠", sub:"作息紊乱型", emoji:"🦇", color:["#303855","#77719f"],
+    text:"你的生物钟和学校生活的社会时钟可能存在错位，表现为晚睡晚起、周内周末波动大，甚至补觉后仍然疲惫。",
+    keys:["节律紊乱","社会时钟冲突","晚睡晚起","补觉无效"],
+    tips:["先固定起床时间，而不是只要求早睡","每2-3天把入睡和起床时间前移15-30分钟","减少周末过度补觉，用晨间光照帮助校准生物钟"]
+  },
+  squirrel:{
+    name:"硬撑松鼠", sub:"生理消耗型", emoji:"🐿️", color:["#7b563e","#c69046"],
+    text:"你的状态更像长期睡眠债和恢复不足：白天困、靠咖啡因硬撑、运动不足或醒后仍累。核心不是再撑一会儿，而是恢复系统已经透支。",
+    keys:["睡眠债","咖啡因依赖","体力透支","日间困倦"],
+    tips:["下午后减少咖啡因摄入，避免影响夜间睡眠","加入低强度运动，如散步、八段锦或拉伸","设置短时小憩和规律作息，避免长期透支"]
+  },
+  lion:{
+    name:"狮子型", sub:"健康节律型（晨型）", emoji:"🦁", color:["#b66b1e","#d8a541"],
+    text:"你整体属于较健康的晨型节律，早起后效率较高，行动力强。需要注意的是，过多夜间任务和社交安排可能打乱你的优势节律。",
+    keys:["晨型","高效","稳定节律","行动派"],
+    tips:["保持固定作息，保护晨间高效时段","把重要任务安排在上午","避免为了社交或赶任务长期夜间硬撑"]
+  },
+  bear:{
+    name:"熊型", sub:"健康节律型（规律型）", emoji:"🐻", color:["#536b51","#8fa17f"],
+    text:"你的作息整体较平衡，比较接近日光节律，也容易和群体生活同步。需要注意的是，社交性熬夜和午后低谷可能影响稳定状态。",
+    keys:["规律","合群","午后低谷","易受影响"],
+    tips:["保持稳定就寝时间和起床时间","减少被动社交性熬夜","把午后低谷安排为轻任务或短暂休息"]
+  }
+};
+
+function renderQuestions(){
+  const box = document.getElementById("questions");
+  let html = "";
+  questions.forEach(q=>{
+    html += `<div class="q"><div class="q-title">${q.title}${q.req?' <span style="color:#b35d4f">*</span>':''}</div>`;
+    if(q.hint) html += `<div class="hint">${q.hint}</div>`;
+    if(q.type==="radio"){
+      html += `<div class="options ${q.opts.length<=4?'grid2':''}">` + q.opts.map((o,i)=>`
+        <label class="option"><input type="radio" name="${q.id}" value="${i}"><span>${o}</span></label>`).join("") + `</div>`;
+    }
+    if(q.type==="checkbox"){
+      html += `<div class="options ${q.opts.length<=4?'grid2':''}">` + q.opts.map((o,i)=>`
+        <label class="option"><input type="checkbox" name="${q.id}" value="${i}" data-max="${q.max||''}"><span>${o}</span></label>`).join("") + `</div>`;
+    }
+    if(q.type==="matrix"){
+      html += `<div class="matrix">` + q.rows.map(row=>`
+        <div class="matrix-row"><strong>${row.text}</strong>
+          <div class="matrix-options">${q.opts.map((o,i)=>`<label><input type="radio" name="${row.id}" value="${i}"> ${o}</label>`).join("")}</div>
+        </div>`).join("") + `</div>`;
+    }
+    if(q.type==="radioText"){
+      html += `<div class="options">` + q.opts.map((o,i)=>`
+        <label class="option"><input type="radio" name="${q.id}" value="${i}"><span>${o}</span></label>`).join("") + `</div>
+        <div style="margin-top:10px"><input type="text" name="contact" placeholder="如愿意，可填写微信 / 邮箱 / 手机号（本网页不会自动上传，仅显示在本机）"></div>`;
+    }
+    html += `</div>`;
+  });
+  box.innerHTML = html;
+
+  document.querySelectorAll('input[type="checkbox"][data-max]').forEach(cb=>{
+    cb.addEventListener('change', e=>{
+      const max = parseInt(e.target.dataset.max||"0");
+      if(!max) return;
+      const group = [...document.querySelectorAll(`input[name="${e.target.name}"]:checked`)];
+      if(group.length > max){
+        e.target.checked = false;
+        alert(`这道题最多选择 ${max} 项。`);
+      }
+    });
+  });
+}
+
+function val(name){
+  const el = document.querySelector(`input[name="${name}"]:checked`);
+  return el ? parseInt(el.value) : null;
+}
+function checks(name){
+  return [...document.querySelectorAll(`input[name="${name}"]:checked`)].map(x=>parseInt(x.value));
+}
+function hasCheck(name, idx){ return checks(name).includes(idx); }
+
+function validate(){
+  for(const q of questions){
+    if(!q.req) continue;
+    if(q.type==="radio" && val(q.id)===null) return false;
+    if(q.type==="checkbox" && checks(q.id).length===0) return false;
+    if(q.type==="matrix"){
+      for(const row of q.rows){ if(val(row.id)===null) return false; }
+    }
+  }
+  return true;
+}
+
+function score(){
+  const s = {anxiety:0, owl:0, panda:0, bat:0, squirrel:0, lion:0, bear:0};
+
+  // 焦虑兔：题9、11、18、22a、23
+  if([2,3].includes(val("q9"))) s.anxiety += 1;
+  if(val("q11")===3) s.anxiety += 1;
+  if([0,1].includes(val("q18"))) s.anxiety += 1;
+  if([0,1].includes(val("q22a"))) s.anxiety += 1;
+  if([2,3].includes(val("q23"))) s.anxiety += 1;
+  if(hasCheck("q24",0) || hasCheck("q24",3)) s.anxiety += 0.5;
+
+  // 夜游猫头鹰：题10、15、20、22b
+  if([0,1].includes(val("q10"))) s.owl += 1;
+  if([0,1].includes(val("q15"))) s.owl += 1;
+  if([0,1].includes(val("q20"))) s.owl += 1;
+  if([0,1].includes(val("q22b"))) s.owl += 1;
+  if(hasCheck("q24",1)) s.owl += 0.5;
+  if(val("q11")===2) s.owl += 0.5;
+
+  // 敏感小熊猫：题12、24宿舍
+  if(val("q12")===0) s.panda += 1.5;
+  if(val("q12")===1) s.panda += 0.8;
+  if(hasCheck("q24",4)) s.panda += 1.2;
+
+  // 时差蝙蝠：题6、7、13、16、24作息
+  if(val("q6")===3) s.bat += 1;
+  if(val("q7")===3) s.bat += 1;
+  if([2,3].includes(val("q13"))) s.bat += 1;
+  if([1,2].includes(val("q16"))) s.bat += 1;
+  if(hasCheck("q24",2)) s.bat += 1;
+
+  // 硬撑松鼠：题3、5、14、17、21、24缺乏运动/咖啡
+  if(val("q3")===0) s.squirrel += 1;
+  if(val("q5")===3) s.squirrel += 1;
+  if(val("q14")===0) s.squirrel += 1;
+  if(val("q17")===0) s.squirrel += 1;
+  if([2,3].includes(val("q21"))) s.squirrel += 1;
+  if(hasCheck("q24",5) || hasCheck("q24",6)) s.squirrel += 0.8;
+
+  // 健康节律：只有问题类型未达阈值时参与最终判定
+  if([0,1].includes(val("q6"))) s.lion += 1;
+  if(val("q7")===0) s.lion += 1;
+  if(val("q8")===0 || val("q8")===1) s.lion += 1;
+  if(val("q19")===0) s.lion += 1;
+
+  if(val("q6")===2 || val("q6")===1) s.bear += 1;
+  if([1,2].includes(val("q7"))) s.bear += 1;
+  if(val("q13")===0) s.bear += 1;
+  if(val("q19")===1) s.bear += 1;
+
+  return s;
+}
+
+function decide(s){
+  const problemKeys = ["anxiety","owl","panda","bat","squirrel"];
+  // 阈值：多数问题型至少2分；敏感小熊猫题目少，达到1.5即可作为显著问题型。
+  const thresholds = {anxiety:2, owl:2, panda:1.5, bat:2, squirrel:2};
+  const candidates = problemKeys.filter(k => s[k] >= thresholds[k]);
+  if(candidates.length){
+    candidates.sort((a,b)=> s[b]-s[a]);
+    // 并列时按健康教育优先级：更需要干预的焦虑/时差/硬撑优先，其次夜游、敏感
+    const priority = {anxiety:5, bat:4, squirrel:3, owl:2, panda:1};
+    candidates.sort((a,b)=> (s[b]-s[a]) || (priority[b]-priority[a]));
+    return candidates[0];
+  }
+  return s.lion >= s.bear ? "lion" : "bear";
+}
+
+function showResult(type, s){
+  const info = typeInfo[type];
+  const head = document.getElementById("resultHead");
+  head.style.background = `linear-gradient(135deg, ${info.color[0]}, ${info.color[1]})`;
+  document.getElementById("typeName").textContent = info.name;
+  document.getElementById("typeSub").textContent = info.sub;
+  document.getElementById("animalEmoji").textContent = info.emoji;
+  document.getElementById("interpretation").textContent = info.text;
+  document.getElementById("suggestions").innerHTML = info.tips.map(t=>`<li>${t}</li>`).join("");
+  document.getElementById("keywords").innerHTML = info.keys.map(k=>`<span class="tag">${k}</span>`).join("");
+
+  const names = {anxiety:"焦虑兔", owl:"夜游猫头鹰", panda:"敏感小熊猫", bat:"时差蝙蝠", squirrel:"硬撑松鼠", lion:"狮子型", bear:"熊型"};
+  const max = Math.max(...Object.values(s),1);
+  document.getElementById("scoreTable").innerHTML =
+    `<tr><th>类型</th><th>得分</th><th>倾向</th></tr>` +
+    Object.entries(s).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`
+      <tr><td>${names[k]}</td><td>${v}</td><td><div class="bar"><span style="width:${Math.round(v/max*100)}%"></span></div></td></tr>
+    `).join("");
+
+  document.getElementById("result").style.display = "block";
+  document.getElementById("result").scrollIntoView({behavior:"smooth", block:"start"});
+}
+
+document.getElementById("quiz").addEventListener("submit", e=>{
+  e.preventDefault();
+  const warn = document.getElementById("warn");
+  if(!validate()){
+    warn.style.display = "block";
+    return;
+  }
+  warn.style.display = "none";
+  const s = score();
+  const type = decide(s);
+  showResult(type, s);
+});
+
+document.getElementById("resetBtn").addEventListener("click", ()=>{
+  document.getElementById("quiz").reset();
+  document.getElementById("result").style.display = "none";
+  document.getElementById("warn").style.display = "none";
+  window.scrollTo({top:0, behavior:"smooth"});
+});
+
+renderQuestions();
+</script>
+</body>
+</html>
