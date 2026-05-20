@@ -584,10 +584,17 @@ function trySubmitData(payload){
 
     setTimeout(loadLiveStats, 1800);
     setTimeout(loadLiveStats, 4200);
-
   }catch(e){
     console.warn("数据提交失败，但不影响本地结果显示：", e);
     showStatsSyncWarning("后台提交暂时失败，本页结果仍可查看。请稍后刷新统计。");
+  }
+}
+  function showStatsSyncWarning(msg){
+  const box = document.getElementById("liveStats");
+  const copy = document.getElementById("communityCopy");
+  if(box && copy){
+    box.style.display = "block";
+    copy.innerHTML = msg;
   }
 }
 function jsonp(url){
@@ -611,15 +618,26 @@ function jsonp(url){
 }
 
 async function loadLiveStats(){
-  if(!DATA_ENDPOINT) return;
+  if(!DATA_ENDPOINT) {
+    showStatsSyncWarning("后台接口未配置，暂时无法读取全体统计。");
+    return;
+  }
+
   try{
-    const data = await jsonp(DATA_ENDPOINT + "?action=stats");
-    if(!data || !data.ok) return;
+    const data = await jsonp(DATA_ENDPOINT + "?action=stats&t=" + Date.now());
+
+    if(!data || !data.ok) {
+      showStatsSyncWarning("后台统计暂时不可用，请稍后刷新页面。");
+      return;
+    }
+
     window.__latestStats = data;
     const currentType = window.__lastResult ? window.__lastResult.type : null;
     renderCommunityStats(data, currentType, false);
+
   }catch(e){
     console.warn("实时统计读取失败：", e);
+    showStatsSyncWarning("后台统计读取失败：请稍后刷新；如果一直失败，说明手机微信内置浏览器无法读取 Google 统计接口。");
   }
 }
 
@@ -706,7 +724,7 @@ function showResult(type, s){
   }).join("");
 
   const payload = getAnswersPayload(type, s);
-  renderCommunityStats(window.__latestStats, type, true);
+  showStatsSyncWarning("结果已生成，正在同步后台统计...");
   trySubmitData(payload);
 
   document.getElementById("result").style.display = "block";
