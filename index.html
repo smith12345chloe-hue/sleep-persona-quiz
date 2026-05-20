@@ -549,25 +549,47 @@ function getAnswersPayload(type, s){
 }
 
 function trySubmitData(payload){
-  if(!DATA_ENDPOINT) return;
+  if(!DATA_ENDPOINT) {
+    console.warn("DATA_ENDPOINT 为空，未提交后台。");
+    return;
+  }
+
   try{
-    const blob = new Blob([JSON.stringify(payload)], {type:"text/plain;charset=utf-8"});
-    if(navigator.sendBeacon){
-      navigator.sendBeacon(DATA_ENDPOINT, blob);
-    }else{
-      fetch(DATA_ENDPOINT, {
-        method: "POST",
-        mode: "no-cors",
-        headers: {"Content-Type":"text/plain;charset=utf-8"},
-        body: JSON.stringify(payload)
-      });
-    }
-    setTimeout(loadLiveStats, 1500);
+    const iframeName = "hidden_submit_iframe_" + Date.now();
+
+    const iframe = document.createElement("iframe");
+    iframe.name = iframeName;
+    iframe.style.display = "none";
+    document.body.appendChild(iframe);
+
+    const form = document.createElement("form");
+    form.method = "POST";
+    form.action = DATA_ENDPOINT;
+    form.target = iframeName;
+    form.style.display = "none";
+
+    const input = document.createElement("input");
+    input.type = "hidden";
+    input.name = "payload";
+    input.value = JSON.stringify(payload);
+
+    form.appendChild(input);
+    document.body.appendChild(form);
+    form.submit();
+
+    setTimeout(function(){
+      if(form && form.parentNode) form.parentNode.removeChild(form);
+      if(iframe && iframe.parentNode) iframe.parentNode.removeChild(iframe);
+    }, 8000);
+
+    setTimeout(loadLiveStats, 1800);
+    setTimeout(loadLiveStats, 4200);
+
   }catch(e){
     console.warn("数据提交失败，但不影响本地结果显示：", e);
+    showStatsSyncWarning("后台提交暂时失败，本页结果仍可查看。请稍后刷新统计。");
   }
 }
-
 function jsonp(url){
   return new Promise((resolve, reject)=>{
     const cbName = "jsonp_cb_" + Math.random().toString(36).slice(2);
