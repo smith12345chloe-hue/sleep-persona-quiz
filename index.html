@@ -110,7 +110,7 @@
       width:100%;border:1px solid #e4d9c8;border-radius:14px;
       background:#fffaf2;padding:12px 14px;font-size:15px;color:var(--ink);
     }
-    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .grid2{display:grid;grid-template-columns:1fr;gap:12px}
     @media(max-width:720px){.grid2{grid-template-columns:1fr}.hero{padding:28px 22px}.card{padding:20px}h1{font-size:42px}}
     .matrix{
       display:grid;gap:12px;
@@ -184,6 +184,26 @@
     }
     .percent-name{white-space:nowrap}
     .percent-num{text-align:right;color:var(--muted)}
+
+    .result-body.v4{grid-template-columns:1.05fr .95fr;align-items:start}
+    .persona-card-preview{width:100%;border-radius:22px;border:1px solid #eadfce;box-shadow:0 14px 34px rgba(58,48,36,.12);display:block;background:#fff}
+    .result-hero-line{font-size:18px;line-height:1.8;color:#fff;opacity:.98;margin-top:8px;max-width:680px}
+    .same-type-box{margin-top:16px;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.14);border-radius:18px;padding:12px 14px;color:#fff;font-size:16px;line-height:1.6}
+    .same-type-box strong{font-size:24px}
+    .tendency-box{margin-top:16px;border-top:1px dashed #e7dac8;padding-top:14px}
+    .donut-wrap{display:grid;grid-template-columns:210px 1fr;gap:20px;align-items:center}
+    .donut{width:190px;height:190px;border-radius:50%;background:conic-gradient(#6d7fa8 0deg 80deg,#c97868 80deg 130deg,#77719f 130deg 190deg,#c69046 190deg 250deg,#8fa17f 250deg 310deg,#d8a541 310deg 340deg,#eadfce 340deg 360deg);position:relative;box-shadow:inset 0 0 0 1px rgba(0,0,0,.04)}
+    .donut:after{content:"";position:absolute;inset:42px;border-radius:50%;background:#fffdf8;box-shadow:0 0 0 1px #eadfce inset}
+    .donut-center{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:2;font-weight:800;color:#38415f}
+    .donut-center span:first-child{font-size:28px}.donut-center span:last-child{font-size:13px;color:var(--muted);font-weight:600}
+    .legend{display:grid;gap:8px}.legend-row{display:grid;grid-template-columns:12px 1fr auto;gap:8px;align-items:center;font-size:14px}.legend-dot{width:10px;height:10px;border-radius:50%}
+    .community-card{margin-top:22px;background:rgba(255,253,248,.92);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 12px 38px rgba(58,48,36,.08);padding:24px}
+    .community-title{display:flex;align-items:center;gap:12px;font-size:24px;font-weight:800;margin:0 0 14px;color:#38415f}.community-title .dot{width:14px;height:14px;border-radius:50%;background:var(--purple);box-shadow:0 0 0 7px rgba(139,131,179,.12)}
+    .community-copy{border:1px solid #eadfce;background:#fffaf3;border-radius:18px;padding:14px 16px;margin-bottom:18px;color:#4d5263;line-height:1.7;font-size:16px}
+    .community-copy strong{color:#2f3b62;font-size:22px}
+    .pie-area{display:grid;grid-template-columns:220px 1fr;gap:22px;align-items:center}.pie-legend{display:grid;gap:9px}
+    @media(max-width:760px){.result-body.v4,.donut-wrap,.pie-area{grid-template-columns:1fr}.donut,.pie-area .donut{margin:auto}.persona-card-preview{max-width:520px;margin:auto}.result-head h2{font-size:40px}}
+
     .print-hide{}
     @media print{
       body{background:#fff}.print-hide,.card{display:none!important}.result{display:block!important;box-shadow:none}.wrap{padding:0}.hero{display:none}
@@ -221,48 +241,52 @@
         <div class="small">YOUR SLEEP PERSONA CARD</div>
         <h2 id="typeName">焦虑兔</h2>
         <p id="typeSub">压力焦虑型</p>
+        <div class="result-hero-line" id="interpretation"></div>
+        <div class="same-type-box" id="sameTypeBox" style="display:none"></div>
         <span class="animal-emoji" id="animalEmoji">🐰</span>
       </div>
-      <div class="result-body">
-        <div class="mini">
-          <h3>结果解读</h3>
-          <p id="interpretation" style="line-height:1.9;margin:0"></p>
-          <div class="notice">
-            本结果用于健康教育与自我觉察，不等同于医学诊断。若长期严重失眠、焦虑或白天功能明显受损，建议寻求校医院、心理咨询中心或专业医生帮助。
+      <div class="result-body v4">
+        <div>
+          <div class="mini">
+            <h3>一句话戳中你</h3>
+            <p id="sharpLine" style="line-height:1.9;margin:0;font-size:17px"></p>
           </div>
-          <div class="result-actions">
-            <button type="button" class="tiny-btn dark" id="downloadCardBtn">保存我的人格卡片</button>
-            <button type="button" class="tiny-btn" id="copyResultBtn">复制结果文字</button>
+          <div class="mini" style="margin-top:16px">
+            <h3>核心建议</h3>
+            <ul id="suggestions"></ul>
+            <div class="result-actions">
+              <button type="button" class="tiny-btn dark" id="downloadCardBtn">保存我的人格卡片</button>
+              <button type="button" class="tiny-btn" id="copyResultBtn">复制结果文字</button>
+            </div>
+          </div>
+          <div class="mini" style="margin-top:16px">
+            <h3>关键词</h3>
+            <div class="tags" id="keywords"></div>
+            <div class="tendency-box">
+              <h3 style="margin-top:0">人格倾向比例</h3>
+              <div id="percentChart"></div>
+            </div>
           </div>
         </div>
         <div class="mini">
-          <h3>核心建议</h3>
-          <ul id="suggestions"></ul>
-        </div>
-        <div class="mini">
-          <h3>关键词</h3>
-          <div class="tags" id="keywords"></div>
-        </div>
-        <div class="mini">
-          <h3>人格倾向比例</h3>
-          <div id="percentChart"></div>
-          <table class="score-table" id="scoreTable"></table>
+          <h3>你的专属人格卡</h3>
+          <img id="personaCardImg" class="persona-card-preview" alt="睡眠动物人格卡片">
         </div>
       </div>
     </div>
 
 
-    <div id="liveStats" class="card print-hide" style="display:none">
-      <div class="section-title"><span class="dot"></span>项目实时统计</div>
-      <div class="stats-summary">
-        当前已收集 <strong id="statsTotal">0</strong> 份结果
-        <span id="statsUpdated" style="color:var(--muted);font-size:13px;margin-left:8px"></span>
+    <div id="liveStats" class="community-card print-hide" style="display:none">
+      <div class="community-title"><span class="dot"></span>睡眠动物园实时分布</div>
+      <div class="community-copy" id="communityCopy">正在加载睡眠动物园...</div>
+      <div class="pie-area">
+        <div class="donut" id="statsDonut"><div class="donut-center"><span id="statsTotal">0</span><span>份结果</span></div></div>
+        <div class="pie-legend" id="statsBars"></div>
       </div>
-      <div id="statsBars" class="stats-bars"></div>
     </div>
 
     <p class="footer-note print-hide">
-      分享方式：把这个 HTML 文件发给同学，对方用浏览器打开即可填写。若要线上收集大量结果，建议后续把同样题目迁移到问卷星/腾讯问卷，并按本页面的评分规则配置自动反馈。
+      完成问卷后会生成个人睡眠动物人格；后台仅用于课程项目统计与活动招募，请勿公开他人联系方式。
     </p>
   </div>
 
@@ -555,27 +579,67 @@ async function loadLiveStats(){
   try{
     const data = await jsonp(DATA_ENDPOINT + "?action=stats");
     if(!data || !data.ok) return;
-
-    const typeOrder = ["焦虑兔","夜游猫头鹰","敏感小熊猫","时差蝙蝠","硬撑松鼠","狮子型","熊型"];
-    document.getElementById("liveStats").style.display = "block";
-    document.getElementById("statsTotal").textContent = data.total || 0;
-
-    const updated = data.updated_at ? new Date(data.updated_at) : null;
-    document.getElementById("statsUpdated").textContent = updated ? "更新于 " + updated.toLocaleString() : "";
-
-    const maxCount = Math.max(...Object.values(data.counts || {x:0}), 1);
-    document.getElementById("statsBars").innerHTML = typeOrder.map(name=>{
-      const count = (data.counts && data.counts[name]) || 0;
-      const pct = (data.percentages && data.percentages[name]) || 0;
-      return `<div class="stats-row">
-        <strong>${name}</strong>
-        <div class="bar"><span style="width:${Math.max(2, count/maxCount*100)}%"></span></div>
-        <span>${count}人 / ${pct}%</span>
-      </div>`;
-    }).join("");
+    window.__latestStats = data;
+    const currentType = window.__lastResult ? window.__lastResult.type : null;
+    renderCommunityStats(data, currentType, false);
   }catch(e){
     console.warn("实时统计读取失败：", e);
   }
+}
+
+function renderCommunityStats(data, currentTypeKey=null, optimistic=false){
+  if(!data){
+    data = {total:0, counts:{}, percentages:{}};
+  }
+  const keyToName = {anxiety:"焦虑兔", owl:"夜游猫头鹰", panda:"敏感小熊猫", bat:"时差蝙蝠", squirrel:"硬撑松鼠", lion:"狮子型", bear:"熊型"};
+  const typeOrder = ["焦虑兔","夜游猫头鹰","敏感小熊猫","时差蝙蝠","硬撑松鼠","狮子型","熊型"];
+  const colors = ["#6d7fa8", "#2f3b62", "#c97868", "#77719f", "#c69046", "#d8a541", "#8fa17f"];
+  const counts = {...(data.counts || {})};
+  typeOrder.forEach(t=>{ if(counts[t] == null) counts[t] = 0; });
+
+  let total = Number(data.total || 0);
+  if(currentTypeKey && optimistic){
+    const name = keyToName[currentTypeKey];
+    counts[name] = (counts[name] || 0) + 1;
+    total += 1;
+  }
+  total = Math.max(total, 0);
+
+  document.getElementById("liveStats").style.display = "block";
+  const currentName = currentTypeKey ? keyToName[currentTypeKey] : null;
+  const sameCount = currentName ? (counts[currentName] || 0) : 0;
+  if(currentName){
+    document.getElementById("communityCopy").innerHTML = `现在已有 <strong>${sameCount}</strong> 人和你一样是 <strong>${currentName}</strong>。睡眠动物园目前共收集 <strong>${total}</strong> 份结果。`;
+    document.getElementById("sameTypeBox").style.display = "block";
+    document.getElementById("sameTypeBox").innerHTML = `你不是一个人在熬夜宇宙里漂流：目前已有 <strong>${sameCount}</strong> 人和你一样是 ${currentName}。`;
+  }else{
+    document.getElementById("communityCopy").innerHTML = `睡眠动物园目前共收集 <strong>${total}</strong> 份结果。完成问卷后，你会看到有多少人和你属于同一种睡眠动物。`;
+  }
+  document.getElementById("statsTotal").textContent = total;
+
+  let angle = 0;
+  const stops = [];
+  typeOrder.forEach((name,i)=>{
+    const pct = total ? counts[name] / total : 0;
+    const deg = pct * 360;
+    if(deg > 0){
+      stops.push(`${colors[i]} ${angle}deg ${angle+deg}deg`);
+      angle += deg;
+    }
+  });
+  if(stops.length === 0) stops.push("#eadfce 0deg 360deg");
+  else if(angle < 360) stops.push(`#eadfce ${angle}deg 360deg`);
+  document.getElementById("statsDonut").style.background = `conic-gradient(${stops.join(',')})`;
+
+  document.getElementById("statsBars").innerHTML = typeOrder.map((name,i)=>{
+    const count = counts[name] || 0;
+    const pct = total ? Math.round(count / total * 100) : 0;
+    return `<div class="legend-row">
+      <span class="legend-dot" style="background:${colors[i]}"></span>
+      <span>${name}</span>
+      <strong>${count}人 / ${pct}%</strong>
+    </div>`;
+  }).join("");
 }
 
 function showResult(type, s){
@@ -587,11 +651,12 @@ function showResult(type, s){
   document.getElementById("typeSub").textContent = info.sub;
   document.getElementById("animalEmoji").textContent = info.emoji;
   document.getElementById("interpretation").textContent = info.text;
+  document.getElementById("sharpLine").textContent = info.sharp;
   document.getElementById("suggestions").innerHTML = info.tips.map(t=>`<li>${t}</li>`).join("");
   document.getElementById("keywords").innerHTML = info.keys.map(k=>`<span class="tag">${k}</span>`).join("");
+  document.getElementById("personaCardImg").src = CARD_IMAGES[type] || "";
 
   const names = {anxiety:"焦虑兔", owl:"夜游猫头鹰", panda:"敏感小熊猫", bat:"时差蝙蝠", squirrel:"硬撑松鼠", lion:"狮子型", bear:"熊型"};
-  const max = Math.max(...Object.values(s),1);
   const total = Object.values(s).reduce((a,b)=>a+b,0) || 1;
   const rows = Object.entries(s).sort((a,b)=>b[1]-a[1]);
   document.getElementById("percentChart").innerHTML = rows.map(([k,v])=>{
@@ -602,13 +667,9 @@ function showResult(type, s){
       <div class="percent-num">${pct}%</div>
     </div>`;
   }).join("");
-  document.getElementById("scoreTable").innerHTML =
-    `<tr><th>类型</th><th>得分</th><th>相对强度</th></tr>` +
-    rows.map(([k,v])=>`
-      <tr><td>${names[k]}</td><td>${v}</td><td><div class="bar"><span style="width:${Math.round(v/max*100)}%"></span></div></td></tr>
-    `).join("");
 
   const payload = getAnswersPayload(type, s);
+  renderCommunityStats(window.__latestStats, type, true);
   trySubmitData(payload);
 
   document.getElementById("result").style.display = "block";
@@ -620,117 +681,11 @@ function downloadResultCard(){
     alert("请先完成问卷生成结果。");
     return;
   }
-  const {type, scores} = window.__lastResult;
+  const {type} = window.__lastResult;
   const info = typeInfo[type];
-  const names = {anxiety:"焦虑兔", owl:"夜游猫头鹰", panda:"敏感小熊猫", bat:"时差蝙蝠", squirrel:"硬撑松鼠", lion:"狮子型", bear:"熊型"};
-  const total = Object.values(scores).reduce((a,b)=>a+b,0) || 1;
-  const rows = Object.entries(scores).sort((a,b)=>b[1]-a[1]).slice(0,5);
-
-  const canvas = document.createElement("canvas");
-  canvas.width = 1080;
-  canvas.height = 1500;
-  const ctx = canvas.getContext("2d");
-
-  function roundRect(x,y,w,h,r){
-    ctx.beginPath();
-    ctx.moveTo(x+r,y);
-    ctx.arcTo(x+w,y,x+w,y+h,r);
-    ctx.arcTo(x+w,y+h,x,y+h,r);
-    ctx.arcTo(x,y+h,x,y,r);
-    ctx.arcTo(x,y,x+w,y,r);
-    ctx.closePath();
-  }
-  function wrapText(text,x,y,maxWidth,lineHeight,font){
-    ctx.font = font;
-    const chars = text.split("");
-    let line = "";
-    const lines = [];
-    chars.forEach(ch=>{
-      const test = line + ch;
-      if(ctx.measureText(test).width > maxWidth && line){
-        lines.push(line); line = ch;
-      }else line = test;
-    });
-    if(line) lines.push(line);
-    lines.forEach((l,i)=>ctx.fillText(l,x,y+i*lineHeight));
-    return y + lines.length*lineHeight;
-  }
-
-  ctx.fillStyle = "#f7f3ec";
-  ctx.fillRect(0,0,canvas.width,canvas.height);
-  roundRect(70,70,940,1360,42);
-  ctx.fillStyle = "#fffdf8";
-  ctx.fill();
-  ctx.strokeStyle = "#e8dfd1";
-  ctx.lineWidth = 3;
-  ctx.stroke();
-
-  const grad = ctx.createLinearGradient(90,90,990,360);
-  grad.addColorStop(0, info.color[0]);
-  grad.addColorStop(1, info.color[1]);
-  roundRect(100,100,880,330,34);
-  ctx.fillStyle = grad;
-  ctx.fill();
-
-  ctx.fillStyle = "rgba(255,255,255,.86)";
-  ctx.font = "bold 34px serif";
-  ctx.textAlign = "center";
-  ctx.fillText("SLEEP PERSONA CARD", 540, 160);
-
-  ctx.fillStyle = "#ffffff";
-  ctx.font = "bold 92px serif";
-  ctx.fillText(info.name, 540, 265);
-  ctx.font = "38px serif";
-  ctx.fillText(info.sub, 540, 325);
-  ctx.font = "90px serif";
-  ctx.fillText(info.emoji, 540, 410);
-
-  ctx.textAlign = "left";
-  ctx.fillStyle = "#2f3343";
-  ctx.font = "bold 38px serif";
-  ctx.fillText("结果解读", 130, 520);
-  ctx.fillStyle = "#555b68";
-  wrapText(info.text,130,575,820,48,"32px serif");
-
-  ctx.fillStyle = "#2f3343";
-  ctx.font = "bold 38px serif";
-  ctx.fillText("核心建议", 130, 770);
-  ctx.fillStyle = "#555b68";
-  ctx.font = "32px serif";
-  info.tips.forEach((t,i)=>{
-    ctx.fillText("• " + t, 150, 830+i*52);
-  });
-
-  ctx.fillStyle = "#2f3343";
-  ctx.font = "bold 38px serif";
-  ctx.fillText("人格倾向比例", 130, 1040);
-
-  rows.forEach(([k,v],i)=>{
-    const y = 1100 + i*58;
-    const pct = Math.round(v/total*100);
-    ctx.fillStyle = "#555b68";
-    ctx.font = "28px serif";
-    ctx.fillText(names[k], 150, y);
-    ctx.fillStyle = "#eee4d7";
-    roundRect(330, y-24, 420, 22, 11);
-    ctx.fill();
-    ctx.fillStyle = info.color[1];
-    roundRect(330, y-24, Math.max(4,420*pct/100), 22, 11);
-    ctx.fill();
-    ctx.fillStyle = "#747887";
-    ctx.fillText(pct+"%", 785, y);
-  });
-
-  ctx.textAlign = "center";
-  ctx.fillStyle = "#8b8175";
-  ctx.font = "28px serif";
-  ctx.fillText("大学生睡眠健康促进项目", 540, 1365);
-  ctx.font = "22px serif";
-  ctx.fillText("本结果用于健康教育与自我觉察，不等同于医学诊断", 540, 1405);
-
   const a = document.createElement("a");
-  a.download = `睡眠动物人格卡片_${info.name}.png`;
-  a.href = canvas.toDataURL("image/png");
+  a.download = `睡眠动物人格卡片_${info.name}.webp`;
+  a.href = CARD_IMAGES[type];
   a.click();
 }
 
