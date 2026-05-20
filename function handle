@@ -125,9 +125,13 @@
     }
     .actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:20px}
     button{
-      border:none;border-radius:999px;padding:13px 22px;font-size:16px;cursor:pointer;
-      font-weight:700;letter-spacing:.04em;
-    }
+  border:none;border-radius:999px;padding:13px 22px;font-size:16px;cursor:pointer;
+  font-weight:700;letter-spacing:.04em;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+button:disabled{opacity:.62;cursor:not-allowed}
     .primary{background:#2f3b62;color:#fff;box-shadow:0 10px 24px rgba(47,59,98,.22)}
     .secondary{background:#f0e8dc;color:#54483b}
     .result{
@@ -230,7 +234,7 @@
       <div class="section-title"><span class="dot"></span>第一部分：基本信息</div>
       <div id="questions"></div>
       <div class="actions">
-        <button type="submit" class="primary">生成我的睡眠人格</button>
+        <button type="button" class="primary" id="generateBtn">生成我的睡眠人格</button>
         <button type="button" id="resetBtn" class="secondary">重新填写</button>
       </div>
       <div id="warn" class="required-warn">还有题目没有完成，请检查必答题后再生成结果。</div>
@@ -711,24 +715,99 @@ function copyResultText(){
   navigator.clipboard?.writeText(text).then(()=>alert("结果文字已复制。")).catch(()=>alert(text));
 }
 
-function handleGenerate(){
-  const warn = document.getElementById("warn");
-  if(!validate()){
-    warn.style.display = "block";
-    warn.textContent = "还有必答题没有完成，请往上检查带 * 的题目。";
-    warn.scrollIntoView({behavior:"smooth", block:"center"});
-    return;
+function findFirstMissingQuestion(){
+  for(const q of questions){
+    if(!q.req) continue;
+
+    if(q.type === "radio" && val(q.id) === null){
+      const el = document.querySelector('input[name="' + q.id + '"]');
+      return el ? el.closest(".q") : null;
+    }
+
+    if(q.type === "checkbox" && checks(q.id).length === 0){
+      const el = document.querySelector('input[name="' + q.id + '"]');
+      return el ? el.closest(".q") : null;
+    }
+
+    if(q.type === "matrix"){
+      for(const row of q.rows){
+        if(val(row.id) === null){
+          const el = document.querySelector('input[name="' + row.id + '"]');
+          return el ? el.closest(".q") : null;
+        }
+      }
+    }
   }
-  warn.style.display = "none";
-  const s = score();
-  const type = decide(s);
-  showResult(type, s);
+  return null;
 }
 
-document.getElementById("quiz").addEventListener("submit", e=>{
-  e.preventDefault();
-  handleGenerate();
-});
+function handleGenerate(){
+  const warn = document.getElementById("warn");
+  const btn = document.getElementById("generateBtn");
+
+  if(!validate()){
+    warn.style.display = "block";
+    warn.textContent = "还有必答题没有完成，已跳转到第一道漏填题。请补完后再生成结果。";
+    const firstMissing = findFirstMissingQuestion();
+    if(firstMissing){
+      firstMissing.scrollIntoView({behavior:"smooth", block:"center"});
+    }else{
+      warn.scrollIntoView({behavior:"smooth", block:"center"});
+    }
+    return false;
+  }
+
+  warn.style.display = "none";
+
+  if(btn){
+    btn.disabled = true;
+    btn.textContent = "正在生成...";
+  }
+
+  try{
+    const s = score();
+    const type = decide(s);
+    showResult(type, s);
+  }catch(err){
+    console.error(err);
+    alert("生成结果时遇到问题，请刷新页面后重试。");
+  }finally{
+    if(btn){
+      setTimeout(function(){
+        btn.disabled = false;
+        btn.textContent = "生成我的睡眠人格";
+      }, 600);
+    }
+  }
+
+  return false;
+}
+
+const quizForm = document.getElementById("quiz");
+if(quizForm){
+  quizForm.addEventListener("submit", function(e){
+    e.preventDefault();
+    handleGenerate();
+    return false;
+  });
+}
+
+const generateBtn = document.getElementById("generateBtn");
+if(generateBtn){
+  generateBtn.addEventListener("click", function(e){
+    e.preventDefault();
+    handleGenerate();
+    return false;
+  });
+
+  generateBtn.addEventListener("touchend", function(e){
+    e.preventDefault();
+    handleGenerate();
+    return false;
+  }, {passive:false});
+}
+
+
 
 document.getElementById("resetBtn").addEventListener("click", ()=>{
   document.getElementById("quiz").reset();
