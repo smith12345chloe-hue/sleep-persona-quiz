@@ -110,7 +110,7 @@
       width:100%;border:1px solid #e4d9c8;border-radius:14px;
       background:#fffaf2;padding:12px 14px;font-size:15px;color:var(--ink);
     }
-    .grid2{display:grid;grid-template-columns:1fr;gap:12px}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     @media(max-width:720px){.grid2{grid-template-columns:1fr}.hero{padding:28px 22px}.card{padding:20px}h1{font-size:42px}}
     .matrix{
       display:grid;gap:12px;
@@ -162,6 +162,14 @@
     }
     .required-warn{display:none;color:#b35d4f;font-size:14px;margin-top:10px}
     .footer-note{text-align:center;color:var(--muted);font-size:13px;line-height:1.8;margin:18px auto 0;max-width:760px}
+    .stats-summary{
+      border:1px solid #eadfce;background:#fffaf3;border-radius:18px;padding:14px 16px;margin-bottom:14px;
+      color:#4d5263;line-height:1.7;
+    }
+    .stats-bars{display:grid;gap:10px}
+    .stats-row{display:grid;grid-template-columns:110px 1fr 70px;gap:10px;align-items:center;font-size:14px}
+    .stats-row strong{font-weight:700}
+    @media(max-width:640px){.stats-row{grid-template-columns:92px 1fr 52px;font-size:13px}}
     .result-actions{
       display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;
     }
@@ -243,15 +251,24 @@
       </div>
     </div>
 
+
+    <div id="liveStats" class="card print-hide" style="display:none">
+      <div class="section-title"><span class="dot"></span>项目实时统计</div>
+      <div class="stats-summary">
+        当前已收集 <strong id="statsTotal">0</strong> 份结果
+        <span id="statsUpdated" style="color:var(--muted);font-size:13px;margin-left:8px"></span>
+      </div>
+      <div id="statsBars" class="stats-bars"></div>
+    </div>
+
     <p class="footer-note print-hide">
       分享方式：把这个 HTML 文件发给同学，对方用浏览器打开即可填写。若要线上收集大量结果，建议后续把同样题目迁移到问卷星/腾讯问卷，并按本页面的评分规则配置自动反馈。
     </p>
   </div>
 
 <script>
-// 后台收集接口：
-// 1. 现在留空，网页只在本地计算结果，不上传数据。
-// 2. 如果之后用 Google Apps Script / Supabase 等做收集，把接口地址粘到这里。
+// 后台收集接口：把 Google Apps Script Web App URL 粘贴到引号中。
+// 示例：const DATA_ENDPOINT = "https://script.google.com/macros/s/AKfycbzNaCrVQ1Yt1DOI-YO3JAEAny9pXsv8sqFcWw9Fr_RwFhNkwWc4XHCBfXPe6Lq0wtNy/exec";
 const DATA_ENDPOINT = "";
 
 const questions = [
@@ -497,14 +514,68 @@ function getAnswersPayload(type, s){
 function trySubmitData(payload){
   if(!DATA_ENDPOINT) return;
   try{
-    fetch(DATA_ENDPOINT, {
-      method: "POST",
-      mode: "no-cors",
-      headers: {"Content-Type":"text/plain;charset=utf-8"},
-      body: JSON.stringify(payload)
-    });
+    const blob = new Blob([JSON.stringify(payload)], {type:"text/plain;charset=utf-8"});
+    if(navigator.sendBeacon){
+      navigator.sendBeacon(DATA_ENDPOINT, blob);
+    }else{
+      fetch(DATA_ENDPOINT, {
+        method: "POST",
+        mode: "no-cors",
+        headers: {"Content-Type":"text/plain;charset=utf-8"},
+        body: JSON.stringify(payload)
+      });
+    }
+    setTimeout(loadLiveStats, 1500);
   }catch(e){
     console.warn("数据提交失败，但不影响本地结果显示：", e);
+  }
+}
+
+function jsonp(url){
+  return new Promise((resolve, reject)=>{
+    const cbName = "jsonp_cb_" + Math.random().toString(36).slice(2);
+    const script = document.createElement("script");
+    const sep = url.includes("?") ? "&" : "?";
+    script.src = url + sep + "callback=" + cbName;
+    window[cbName] = (data)=>{
+      resolve(data);
+      delete window[cbName];
+      script.remove();
+    };
+    script.onerror = ()=>{
+      delete window[cbName];
+      script.remove();
+      reject(new Error("JSONP request failed"));
+    };
+    document.body.appendChild(script);
+  });
+}
+
+async function loadLiveStats(){
+  if(!DATA_ENDPOINT) return;
+  try{
+    const data = await jsonp(DATA_ENDPOINT + "?action=stats");
+    if(!data || !data.ok) return;
+
+    const typeOrder = ["焦虑兔","夜游猫头鹰","敏感小熊猫","时差蝙蝠","硬撑松鼠","狮子型","熊型"];
+    document.getElementById("liveStats").style.display = "block";
+    document.getElementById("statsTotal").textContent = data.total || 0;
+
+    const updated = data.updated_at ? new Date(data.updated_at) : null;
+    document.getElementById("statsUpdated").textContent = updated ? "更新于 " + updated.toLocaleString() : "";
+
+    const maxCount = Math.max(...Object.values(data.counts || {x:0}), 1);
+    document.getElementById("statsBars").innerHTML = typeOrder.map(name=>{
+      const count = (data.counts && data.counts[name]) || 0;
+      const pct = (data.percentages && data.percentages[name]) || 0;
+      return `<div class="stats-row">
+        <strong>${name}</strong>
+        <div class="bar"><span style="width:${Math.max(2, count/maxCount*100)}%"></span></div>
+        <span>${count}人 / ${pct}%</span>
+      </div>`;
+    }).join("");
+  }catch(e){
+    console.warn("实时统计读取失败：", e);
   }
 }
 
@@ -701,6 +772,7 @@ document.addEventListener("click", (e)=>{
 });
 
 renderQuestions();
+loadLiveStats();
 </script>
 </body>
 </html>
