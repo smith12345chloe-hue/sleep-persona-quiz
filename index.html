@@ -127,10 +127,7 @@
     button{
       border:none;border-radius:999px;padding:13px 22px;font-size:16px;cursor:pointer;
       font-weight:700;letter-spacing:.04em;
-      touch-action: manipulation;
-      -webkit-tap-highlight-color: transparent;
     }
-    button:disabled{opacity:.55;cursor:not-allowed}
     .primary{background:#2f3b62;color:#fff;box-shadow:0 10px 24px rgba(47,59,98,.22)}
     .secondary{background:#f0e8dc;color:#54483b}
     .result{
@@ -233,10 +230,10 @@
       <div class="section-title"><span class="dot"></span>第一部分：基本信息</div>
       <div id="questions"></div>
       <div class="actions">
-        <button type="button" class="primary" id="generateBtn">生成我的睡眠人格</button>
+        <button type="submit" class="primary">生成我的睡眠人格</button>
         <button type="button" id="resetBtn" class="secondary">重新填写</button>
       </div>
-      <div id="warn" class="required-warn">还有题目没有完成，已跳转到第一道未完成题。请检查必答题后再生成结果。</div>
+      <div id="warn" class="required-warn">还有题目没有完成，请检查必答题后再生成结果。</div>
     </form>
 
     <div id="result" class="result">
@@ -535,7 +532,7 @@ function getAnswersPayload(type, s){
     if(q.type === "radioText"){
       const idx = val(q.id);
       answerObj[q.id] = idx === null ? "" : q.opts[idx];
-      answerObj.contact = (document.querySelector('input[name="contact"]') ? document.querySelector('input[name="contact"]').value : "");
+      answerObj.contact = document.querySelector('input[name="contact"]')?.value || "";
     }
   });
   return {
@@ -711,11 +708,7 @@ function copyResultText(){
   const {type, scores} = window.__lastResult;
   const info = typeInfo[type];
   const text = `我的睡眠动物人格：${info.name}｜${info.sub}\n${info.text}\n关键词：${info.keys.join("、")}\n建议：${info.tips.join("；")}`;
-  if(navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(text).then(()=>alert("结果文字已复制。")).catch(()=>alert(text));
-  }else{
-    alert(text);
-  }
+  navigator.clipboard?.writeText(text).then(()=>alert("结果文字已复制。")).catch(()=>alert(text));
 }
 
 function handleGenerate(){
@@ -732,73 +725,10 @@ function handleGenerate(){
   showResult(type, s);
 }
 
-function handleGenerate(){
-  const warn = document.getElementById("warn");
-  if(!validate()){
-    warn.style.display = "block";
-    const firstMissing = findFirstMissingQuestion();
-    if(firstMissing){
-      firstMissing.scrollIntoView({behavior:"smooth", block:"center"});
-    }
-    return false;
-  }
-  warn.style.display = "none";
-  const btn = document.getElementById("generateBtn");
-  if(btn){
-    btn.disabled = true;
-    btn.textContent = "正在生成...";
-  }
-  try{
-    const s = score();
-    const type = decide(s);
-    showResult(type, s);
-  }catch(err){
-    alert("生成结果时遇到问题，请刷新页面后重试。");
-    console.error(err);
-  }finally{
-    if(btn){
-      setTimeout(()=>{
-        btn.disabled = false;
-        btn.textContent = "生成我的睡眠人格";
-      }, 600);
-    }
-  }
-  return false;
-}
-
-function findFirstMissingQuestion(){
-  for(const q of questions){
-    if(!q.req) continue;
-    if(q.type==="radio" && val(q.id)===null) return (document.querySelector(`[name="${q.id}"]`) ? document.querySelector(`[name="${q.id}"]`).closest(".q") : null);
-    if(q.type==="checkbox" && checks(q.id).length===0) return (document.querySelector(`[name="${q.id}"]`) ? document.querySelector(`[name="${q.id}"]`).closest(".q") : null);
-    if(q.type==="matrix"){
-      for(const row of q.rows){
-        if(val(row.id)===null) return (document.querySelector(`[name="${row.id}"]`) ? document.querySelector(`[name="${row.id}"]`).closest(".q") : null);
-      }
-    }
-  }
-  return null;
-}
-
-const quizForm = document.getElementById("quiz");
-if(quizForm){
-  quizForm.addEventListener("submit", function(e){
-    e.preventDefault();
-    handleGenerate();
-  });
-}
-
-const generateBtn = document.getElementById("generateBtn");
-if(generateBtn){
-  generateBtn.addEventListener("click", function(e){
-    e.preventDefault();
-    handleGenerate();
-  });
-  generateBtn.addEventListener("touchend", function(e){
-    e.preventDefault();
-    handleGenerate();
-  }, {passive:false});
-}
+document.getElementById("quiz").addEventListener("submit", e=>{
+  e.preventDefault();
+  handleGenerate();
+});
 
 document.getElementById("resetBtn").addEventListener("click", ()=>{
   document.getElementById("quiz").reset();
